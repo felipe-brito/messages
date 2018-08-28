@@ -7,12 +7,12 @@ import br.com.conductor.messages.model.IdiomaComboBoxModel;
 import br.com.conductor.messages.observer.CountVisitorObserver;
 import br.com.conductor.messages.service.ArquivoService;
 import br.com.conductor.messages.service.IdiomaService;
-import br.com.conductor.messages.util.LoadingUI;
 import br.com.twsoftware.alfred.object.Objeto;
 import java.io.File;
 import java.util.Set;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -22,12 +22,13 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
 
     private static final long serialVersionUID = 3997661267826601441L;
     private final String PREFIXO_ARQUIVO = "messages_";
+    private final String SUFIXO_ARQUIVO = ".properties";
 
     private File origem;
     private File destino;
     private JFileChooser chooser;
     private ArquivoService arquivoService;
-
+    private LoadingUI loading;
     private IdiomaService idiomaService;
 
     /**
@@ -44,6 +45,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         ObserverController.getInstance().register(this);
         idiomaService = new IdiomaService();
         arquivoService = new ArquivoService();
+        loading = new LoadingUI();
     }
 
     private void initView() {
@@ -286,21 +288,25 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
 
     private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
 
-        if (this.chkCopiarOriginal.isSelected()) {
-            //verifica se existe arquivo no resource como o nome indicado
-            //caso não exista, lançar exception
-            //não deixar o fluxo continuar
+        if (arquivoService.existeArquivoDestino(destino, getNomeArquivo())) {
+
+            Integer opcao = JOptionPane.showConfirmDialog(this, mensagemConfirmacao(), "Confirmação", JOptionPane.OK_CANCEL_OPTION);
+
+            if (JOptionPane.OK_CANCEL_OPTION == opcao) {
+                gerarArquivo(this.origem, this.destino, getNomeArquivo(), this.chkCopiarOriginal.isSelected(), Boolean.TRUE);
+            }
+
+        } else {
+            gerarArquivo(this.origem, this.destino, getNomeArquivo(), this.chkCopiarOriginal.isSelected(), Boolean.FALSE);
         }
 
-        //se opção é true
-        //outras opções
     }//GEN-LAST:event_btnIniciarActionPerformed
 
     private void btnAbrirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAbrirActionPerformed
 
         this.chooser = new JFileChooser();
         this.chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        LoadingUI loading = new LoadingUI();
+
         if (JFileChooser.APPROVE_OPTION == this.chooser.showOpenDialog(this)) {
             loading.showView();
             configurarTotalArquivos("");
@@ -375,7 +381,45 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     private String getNomeArquivo() {
 
         Idioma idioma = (Idioma) this.cbIdioma.getSelectedItem();
-        return Objeto.notBlank(idioma) && Objeto.notBlank(idioma.getLinguagem()) ? PREFIXO_ARQUIVO + idioma.getLinguagem() : "";
+        return Objeto.notBlank(idioma) && Objeto.notBlank(idioma.getLinguagem()) ? PREFIXO_ARQUIVO + idioma.getLinguagem() + SUFIXO_ARQUIVO : "";
+    }
+
+    private String mensagemConfirmacao() {
+
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Já existe um arquivo de messagem para o idioma selecionado.\n");
+        builder.append("O processo irá sobrescrever todo o conteúdo.\n\n");
+        builder.append(" Deseja continuar?");
+
+        return builder.toString();
+
+    }
+
+    private void gerarArquivo(File origem, File destino, String nomeArquivo, Boolean copiarOriginal, Boolean sobrescrever) {
+
+        if (sobrescrever) {
+            //realiza logica sobrescrendo o arquivo de destino
+        } else {
+            buildArquivo(origem, destino, nomeArquivo, copiarOriginal);
+        }
+
+    }
+
+    private void gerarArquivoSobrescrito(File origem, File destino, String nomeArquivo, Boolean copiarOriginal) {
+
+    }
+
+    private void buildArquivo(File origem, File destino, String nomeArquivo, Boolean copiarOriginal) {
+
+        if (this.chkCopiarOriginal.isSelected()) {
+            //verifica se existe arquivo no resource como o nome indicado
+            //caso não exista, lançar exception
+            //não deixar o fluxo continuar
+        } else {
+            //realiza o fluxo normal
+        }
+
     }
 
 }

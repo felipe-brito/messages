@@ -1,4 +1,4 @@
-package br.com.conductor.messages.util;
+package br.com.conductor.messages.ui;
 
 /**
  *
@@ -45,6 +45,7 @@ public class LoadingUI extends javax.swing.JDialog {
         jLabel1.setText("Aguarde... Estamos analisando a pasta selecionada.");
 
         lblImagemLoading.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblImagemLoading.setIcon(new javax.swing.ImageIcon(getClass().getResource("/loading.gif"))); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

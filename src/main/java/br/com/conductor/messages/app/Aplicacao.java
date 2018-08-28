@@ -2,8 +2,6 @@ package br.com.conductor.messages.app;
 
 import br.com.conductor.messages.controller.ObserverController;
 import br.com.conductor.messages.controller.TesteObserver;
-import br.com.conductor.messages.service.Request;
-import br.com.conductor.messages.visitor.ApiModelVisitor;
 import br.com.twsoftware.alfred.object.Objeto;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -87,7 +85,7 @@ public class Aplicacao {
 
                         try {
                             parse = JavaParser.parse(d, Charsets.UTF_8);
-                            parse.accept(new ApiModelVisitor(), new Request());
+//                            parse.accept(new ClassVisitor(), new Request());
                             println(incremento, d.getName());
 
                         } catch (FileNotFoundException ex) {

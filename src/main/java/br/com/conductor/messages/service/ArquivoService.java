@@ -8,7 +8,12 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.google.common.collect.Lists;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -30,14 +35,14 @@ public class ArquivoService {
     /**
      * Verifica se existe um arquivo no destino com o mesmo nome do informado.
      *
-     * @param origem - arquivo de destino (diretório)
+     * @param destino - arquivo de destino (diretório)
      * @param nomeArquivo - nome do arquivo de destino
      * @return {@link Boolean}
      */
-    public Boolean existeArquivoDestino(File origem, String nomeArquivo) throws NullPointerException {
+    public Boolean existeArquivoDestino(File destino, String nomeArquivo) throws NullPointerException {
 
-        StringBuilder builder = new StringBuilder(origem.getAbsolutePath());
-        builder.append(File.separator).append(nomeArquivo).append(".properties");
+        StringBuilder builder = new StringBuilder(destino.getAbsolutePath());
+        builder.append(File.separator).append(nomeArquivo);
 
         try {
 
@@ -45,6 +50,19 @@ public class ArquivoService {
         } catch (NullPointerException e) {
             throw new NullPointerException("Nome informado está nulo.");
         }
+    }
+
+    public void gerarArquivoMessage(File origem, File destino) {
+
+        try {
+            Properties props = new Properties();
+            props.load(new FileInputStream(destino));
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ArquivoService.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(ArquivoService.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     private void percorrerDiretorios(File file, VoidVisitorAdapter visitor, Object arg) {
