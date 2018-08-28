@@ -52,6 +52,11 @@ public class ArquivoService {
         }
     }
 
+    /**
+     * 
+     * @param origem
+     * @param destino 
+     */
     public void gerarArquivoMessage(File origem, File destino) {
 
         try {
@@ -65,6 +70,15 @@ public class ArquivoService {
 
     }
 
+    /**
+     * 
+     * @param texto
+     * @param file 
+     */
+    public void escrever(String texto, File file){
+        //realiza a leitura do arquivo e grava o valor
+    }
+    
     private void percorrerDiretorios(File file, VoidVisitorAdapter visitor, Object arg) {
         if (file.isDirectory()) {
 
