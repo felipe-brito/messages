@@ -1,6 +1,7 @@
 package br.com.conductor.messages.visitor;
 
 import br.com.conductor.messages.controller.ObserverController;
+import br.com.conductor.messages.util.Utilitarios;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
@@ -15,12 +16,9 @@ import java.util.Optional;
  */
 public class CountVisitor extends VoidVisitorAdapter<Void> {
 
-    private final String CLASS_CONTANTES_TAGS = "ConstantesTags";
-    private final String ENUM_PIER_EXCEPTION = "ExceptionsMessagesPIEREnum";
-
     @Override
     public void visit(ClassOrInterfaceDeclaration n, Void arg) {
-        if (CLASS_CONTANTES_TAGS.equalsIgnoreCase(n.getName().getIdentifier())) {
+        if (Utilitarios.CLASS_CONTANTES_TAGS.equalsIgnoreCase(n.getName().getIdentifier())) {
             ObserverController.getInstance().notifyCountVisitor(Boolean.TRUE);
         } else {
             Optional<AnnotationExpr> apiModel = n.getAnnotationByClass(ApiModel.class);
@@ -37,7 +35,7 @@ public class CountVisitor extends VoidVisitorAdapter<Void> {
 
     @Override
     public void visit(EnumDeclaration n, Void arg) {
-        if (ENUM_PIER_EXCEPTION.equalsIgnoreCase(n.getName().getIdentifier())) {
+        if (Utilitarios.ENUM_PIER_EXCEPTION.equalsIgnoreCase(n.getName().getIdentifier())) {
             ObserverController.getInstance().notifyCountVisitor(Boolean.TRUE);
         }
     }

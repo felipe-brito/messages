@@ -1,6 +1,8 @@
 package br.com.conductor.messages.service;
 
+import br.com.conductor.messages.exception.ArquivoException;
 import br.com.conductor.messages.util.Utilitarios;
+import br.com.conductor.messages.visitor.ClassVisitor;
 import br.com.conductor.messages.visitor.CountVisitor;
 import br.com.twsoftware.alfred.object.Objeto;
 import com.github.javaparser.JavaParser;
@@ -8,12 +10,11 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.google.common.collect.Lists;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -26,7 +27,7 @@ public class ArquivoService {
     /**
      * Conta o número de arquivos que podem ser internacionalizados.
      *
-     * @param origem - arquivo de origem da internacionalização
+     * @param origem arquivo de origem da internacionalização
      */
     public void contarTotalAquivos(File origem) {
         percorrerDiretorios(origem, new CountVisitor(), null);
@@ -35,11 +36,15 @@ public class ArquivoService {
     /**
      * Verifica se existe um arquivo no destino com o mesmo nome do informado.
      *
-     * @param destino - arquivo de destino (diretório)
-     * @param nomeArquivo - nome do arquivo de destino
+     * @param destino arquivo de destino (diretório)
+     * @param nomeArquivo nome do arquivo de destino
+     *
+     * @throws NullPointerException Se o nome do arquivo não for informado
+     * @throws SecurityException Se o arquivo ou pasta possuir restrição de
+     * acesso a leitura
      * @return {@link Boolean}
      */
-    public Boolean existeArquivoDestino(File destino, String nomeArquivo) throws NullPointerException {
+    public Boolean existeArquivoDestino(File destino, String nomeArquivo) throws NullPointerException, SecurityException {
 
         StringBuilder builder = new StringBuilder(destino.getAbsolutePath());
         builder.append(File.separator).append(nomeArquivo);
@@ -47,73 +52,69 @@ public class ArquivoService {
         try {
 
             return new File(builder.toString()).exists();
-        } catch (NullPointerException e) {
+        } catch (NullPointerException npe) {
             throw new NullPointerException("Nome informado está nulo.");
+        } catch (SecurityException se) {
+            throw new SecurityException("Arquivo não permite acesso de leitura.");
         }
     }
 
-    /**
-     * 
-     * @param origem
-     * @param destino 
-     */
-    public void gerarArquivoMessage(File origem, File destino) {
+    public void escrever(String texto, File file) {
 
         try {
-            Properties props = new Properties();
-            props.load(new FileInputStream(destino));
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(ArquivoService.class.getName()).log(Level.SEVERE, null, ex);
+            Files.write(file.toPath(), texto.getBytes(Utilitarios.CHARSET), StandardOpenOption.APPEND);
         } catch (IOException ex) {
-            Logger.getLogger(ArquivoService.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
-
     }
 
-    /**
-     * 
-     * @param texto
-     * @param file 
-     */
-    public void escrever(String texto, File file){
-        //realiza a leitura do arquivo e grava o valor
+    public void gerarArquivoMessage(File origem, File destino, Properties message) {
+
+        percorrerDiretorios(origem, new ClassVisitor(destino, message), null);
     }
-    
+
     private void percorrerDiretorios(File file, VoidVisitorAdapter visitor, Object arg) {
         if (file.isDirectory()) {
 
             File[] diretorios = file.listFiles();
 
             Lists.newArrayList(diretorios).stream().forEach(d -> {
-                inOrdem(0, d, visitor, arg);
+                inOrdem(d, visitor, arg);
             });
         }
     }
 
-    private void inOrdem(Integer nivel, File diretorio, VoidVisitorAdapter visitor, Object arg) {
+    private void inOrdem(File diretorio, VoidVisitorAdapter visitor, Object arg) {
 
         if (Objeto.notBlank(diretorio)) {
-            Integer incremento = ++nivel;
+
             File[] subDiretorios = diretorio.listFiles();
             if (Objeto.notBlank((Object[]) subDiretorios)) {
                 Lists.newArrayList(subDiretorios).stream().forEach(d -> {
                     if (d.isDirectory()) {
-                        inOrdem(incremento, d, visitor, arg);
+                        inOrdem(d, visitor, arg);
                     } else {
-                        parse(d, visitor, arg);
+                        try {
+                            //se for arquivo .java
+                            parse(d, visitor, arg);
+                        } catch (ArquivoException ex) {
+                            ex.printStackTrace();
+                        }
                     }
                 });
             }
         }
     }
 
-    private void parse(File file, VoidVisitorAdapter visitor, Object arg) {
+    private void parse(File file, VoidVisitorAdapter visitor, Object arg) throws ArquivoException {
+
         try {
 
             parse = JavaParser.parse(file, Utilitarios.CHARSET);
             parse.accept(visitor, arg);
+
         } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
+            throw new ArquivoException(ex.getMessage());
         }
     }
 }

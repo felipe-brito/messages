@@ -9,10 +9,14 @@ import br.com.conductor.messages.service.ArquivoService;
 import br.com.conductor.messages.service.IdiomaService;
 import br.com.twsoftware.alfred.object.Objeto;
 import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.Set;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
@@ -24,8 +28,18 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     private final String PREFIXO_ARQUIVO = "messages_";
     private final String SUFIXO_ARQUIVO = ".properties";
 
+    @Getter
+    @Setter
     private File origem;
+
+    @Getter
+    @Setter
     private File destino;
+
+    @Getter
+    @Setter
+    private File message;
+
     private JFileChooser chooser;
     private ArquivoService arquivoService;
     private LoadingUI loading;
@@ -39,28 +53,6 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         initComponents();
         initComboBoxIdiomas();
         initView();
-    }
-
-    private void newInstance() {
-        ObserverController.getInstance().register(this);
-        idiomaService = new IdiomaService();
-        arquivoService = new ArquivoService();
-        loading = new LoadingUI();
-    }
-
-    private void initView() {
-        this.setLocationRelativeTo(null);
-        this.setResizable(Boolean.FALSE);
-        configurarTotalArquivos("0");
-    }
-
-    private void initComboBoxIdiomas() {
-
-        Set<Idioma> idiomas = idiomaService.listarIdiomas();
-        JComboBox jcb = new JComboBox(new IdiomaComboBoxModel(idiomas));
-
-        this.cbIdioma.setModel(jcb.getModel());
-        this.cbIdioma.setRenderer(new IdiomaComboBoxHandler());
     }
 
     /**
@@ -77,11 +69,13 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         txOrigem = new javax.swing.JTextField();
         btnAbrir = new javax.swing.JButton();
         cbIdioma = new javax.swing.JComboBox<>();
-        chkCopiarOriginal = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         txDestino = new javax.swing.JTextField();
         btnSalvar = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        txMessage = new javax.swing.JTextField();
+        btnSelecionar = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         pbProgresso = new javax.swing.JProgressBar();
         jLabel2 = new javax.swing.JLabel();
@@ -111,9 +105,6 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         cbIdioma.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         cbIdioma.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        chkCopiarOriginal.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        chkCopiarOriginal.setText("Copiar do original");
-
         jLabel3.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         jLabel3.setText("Idioma:");
 
@@ -130,33 +121,48 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
             }
         });
 
+        jLabel6.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        jLabel6.setText("Message:");
+
+        txMessage.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+
+        btnSelecionar.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnSelecionar.setText("Selecionar");
+        btnSelecionar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSelecionarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txOrigem, javax.swing.GroupLayout.PREFERRED_SIZE, 423, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txDestino)))
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(btnAbrir, javax.swing.GroupLayout.DEFAULT_SIZE, 108, Short.MAX_VALUE)
-                            .addComponent(btnSalvar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkCopiarOriginal)
-                            .addComponent(cbIdioma, javax.swing.GroupLayout.PREFERRED_SIZE, 355, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(cbIdioma, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txMessage))
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txOrigem, javax.swing.GroupLayout.PREFERRED_SIZE, 423, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txDestino))))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btnAbrir, javax.swing.GroupLayout.DEFAULT_SIZE, 108, Short.MAX_VALUE)
+                    .addComponent(btnSalvar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnSelecionar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -173,8 +179,12 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
                     .addComponent(txDestino, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnSalvar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(chkCopiarOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnSelecionar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(26, 26, 26)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cbIdioma, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -276,7 +286,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -288,17 +298,9 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
 
     private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
 
-        if (arquivoService.existeArquivoDestino(destino, getNomeArquivo())) {
-
-            Integer opcao = JOptionPane.showConfirmDialog(this, mensagemConfirmacao(), "Confirmação", JOptionPane.OK_CANCEL_OPTION);
-
-            if (JOptionPane.OK_CANCEL_OPTION == opcao) {
-                gerarArquivo(this.origem, this.destino, getNomeArquivo(), this.chkCopiarOriginal.isSelected(), Boolean.TRUE);
-            }
-
-        } else {
-            gerarArquivo(this.origem, this.destino, getNomeArquivo(), this.chkCopiarOriginal.isSelected(), Boolean.FALSE);
-        }
+        Idioma idioma = getIdiomaSelecionado();
+        Boolean existeArquivoDestino = arquivoService.existeArquivoDestino(getDestino(), getNomeArquivo(idioma));
+        gerarArquivoMessage(getOrigem(), getDestino(), getMessage(), getNomeArquivo(idioma), existeArquivoDestino);
 
     }//GEN-LAST:event_btnIniciarActionPerformed
 
@@ -308,11 +310,12 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         this.chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         if (JFileChooser.APPROVE_OPTION == this.chooser.showOpenDialog(this)) {
-            loading.showView();
+            //loading.showView();
             configurarTotalArquivos("");
-            countArquivos(this.chooser.getSelectedFile());
+            setOrigem(this.chooser.getSelectedFile());
+            //countArquivos(this.chooser.getSelectedFile());
             this.txOrigem.setText(this.chooser.getSelectedFile().getAbsolutePath());
-            loading.dispose();
+            //loading.dispose();
         }
 
         ObserverController.getInstance().unregister(this);
@@ -325,7 +328,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         this.chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         if (JFileChooser.APPROVE_OPTION == this.chooser.showOpenDialog(this)) {
-            destino = this.chooser.getSelectedFile();
+            setDestino(this.chooser.getSelectedFile());
             this.txDestino.setText(this.chooser.getSelectedFile().getAbsolutePath());
         }
 
@@ -339,13 +342,17 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         // TODO add your handling code here:
     }//GEN-LAST:event_btnCancelarActionPerformed
 
-    private void configurarTotalArquivos(String txt) {
-        this.lbTotalArquivos.setText(txt);
-    }
+    private void btnSelecionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSelecionarActionPerformed
+        this.chooser = new JFileChooser();
+        this.chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        this.chooser.setAcceptAllFileFilterUsed(Boolean.FALSE);
+        this.chooser.setFileFilter(new FileNameExtensionFilter("Properties files", "properties"));
 
-    private void countArquivos(File file) {
-        arquivoService.contarTotalAquivos(file);
-    }
+        if (JFileChooser.APPROVE_OPTION == this.chooser.showOpenDialog(this)) {
+            setMessage(this.chooser.getSelectedFile());
+            this.txMessage.setText(this.chooser.getSelectedFile().getAbsolutePath());
+        }
+    }//GEN-LAST:event_btnSelecionarActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAbrir;
@@ -353,20 +360,44 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     private javax.swing.JButton btnIniciar;
     private javax.swing.JButton btnPausar;
     private javax.swing.JButton btnSalvar;
+    private javax.swing.JButton btnSelecionar;
     private javax.swing.JComboBox<String> cbIdioma;
-    private javax.swing.JCheckBox chkCopiarOriginal;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lbTotalArquivos;
     private javax.swing.JProgressBar pbProgresso;
     private javax.swing.JTextField txDestino;
+    private javax.swing.JTextField txMessage;
     private javax.swing.JTextField txOrigem;
     // End of variables declaration//GEN-END:variables
+
+    private void newInstance() {
+        ObserverController.getInstance().register(this);
+        idiomaService = new IdiomaService();
+        arquivoService = new ArquivoService();
+        loading = new LoadingUI();
+    }
+
+    private void initView() {
+        this.setLocationRelativeTo(null);
+        this.setResizable(Boolean.FALSE);
+        configurarTotalArquivos("0");
+    }
+
+    private void initComboBoxIdiomas() {
+
+        Set<Idioma> idiomas = idiomaService.listarIdiomas();
+        JComboBox jcb = new JComboBox(new IdiomaComboBoxModel(idiomas));
+
+        this.cbIdioma.setModel(jcb.getModel());
+        this.cbIdioma.setRenderer(new IdiomaComboBoxHandler());
+    }
 
     @Override
     public void update(Object o) {
@@ -378,47 +409,45 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         }
     }
 
-    private String getNomeArquivo() {
+    private void configurarTotalArquivos(String txt) {
+        this.lbTotalArquivos.setText(txt);
+    }
 
-        Idioma idioma = (Idioma) this.cbIdioma.getSelectedItem();
+    private void countArquivos(File file) {
+        arquivoService.contarTotalAquivos(file);
+    }
+
+    private Idioma getIdiomaSelecionado() {
+        return (Idioma) this.cbIdioma.getSelectedItem();
+    }
+
+    private String getNomeArquivo(Idioma idioma) {
+
         return Objeto.notBlank(idioma) && Objeto.notBlank(idioma.getLinguagem()) ? PREFIXO_ARQUIVO + idioma.getLinguagem() + SUFIXO_ARQUIVO : "";
     }
 
-    private String mensagemConfirmacao() {
+    private void gerarArquivoMessage(File origem, File destino, File message, String nomeArquivo, Boolean existeArquivoDestino) {
 
-        StringBuilder builder = new StringBuilder();
-
-        builder.append("Já existe um arquivo de messagem para o idioma selecionado.\n");
-        builder.append("O processo irá sobrescrever todo o conteúdo.\n\n");
-        builder.append(" Deseja continuar?");
-
-        return builder.toString();
-
-    }
-
-    private void gerarArquivo(File origem, File destino, String nomeArquivo, Boolean copiarOriginal, Boolean sobrescrever) {
-
-        if (sobrescrever) {
-            //realiza logica sobrescrendo o arquivo de destino
-        } else {
-            buildArquivo(origem, destino, nomeArquivo, copiarOriginal);
+        if (existeArquivoDestino) {
+            //cria um novo arquivo com o prefixo (n), onde n é a versão ca copia
         }
 
-    }
+        Properties arquivoMessageOriginal = null;
 
-    private void gerarArquivoSobrescrito(File origem, File destino, String nomeArquivo, Boolean copiarOriginal) {
+        StringBuilder builder = new StringBuilder(destino.getAbsolutePath());
+        builder.append(File.separator).append(nomeArquivo);
 
-    }
+        destino = new File(builder.toString());
 
-    private void buildArquivo(File origem, File destino, String nomeArquivo, Boolean copiarOriginal) {
-
-        if (this.chkCopiarOriginal.isSelected()) {
-            //verifica se existe arquivo no resource como o nome indicado
-            //caso não exista, lançar exception
-            //não deixar o fluxo continuar
-        } else {
-            //realiza o fluxo normal
+        if (!destino.exists()) {
+            try {
+                destino.createNewFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
+
+        this.arquivoService.gerarArquivoMessage(origem, destino, arquivoMessageOriginal);
 
     }
 
