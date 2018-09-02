@@ -13,10 +13,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AttributeApiModelProperty implements Serializable {
+public class ApiAttribute implements Serializable {
 
-    private static final long serialVersionUID = -5786999144213667845L;
+    private static final long serialVersionUID = 6175921304534667524L;
 
-    private List<ApiModelPropertyAttribute> methods;
+    private String className;
+    private String description;
+    private List<ApiOperationAttribute> apiOperationParses;
 
 }

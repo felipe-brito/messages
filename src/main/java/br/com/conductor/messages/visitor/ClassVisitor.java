@@ -1,33 +1,27 @@
 package br.com.conductor.messages.visitor;
 
-import br.com.conductor.messages.entidades.ApiModelParse;
-import br.com.conductor.messages.entidades.ApiModelPropertyParse;
-import br.com.conductor.messages.entidades.AttributeApiModelProperty;
+import br.com.conductor.messages.entidades.ApiAttribute;
+import br.com.conductor.messages.entidades.ApiModelAttribute;
 import br.com.conductor.messages.entidades.ConstantesParse;
-import br.com.conductor.messages.entidades.Description;
-import br.com.conductor.messages.entidades.Discriminator;
-import br.com.conductor.messages.entidades.Name;
-import br.com.conductor.messages.entidades.Value;
-import br.com.conductor.messages.enums.AttributeAnnotationSwagger;
+import br.com.conductor.messages.entidades.ExceptionParse;
 import br.com.conductor.messages.enums.FormatterType;
+import br.com.conductor.messages.parse.ApiGenerator;
+import br.com.conductor.messages.parse.ApiModelGenerator;
+import br.com.conductor.messages.parse.ConstantesGenerator;
+import br.com.conductor.messages.parse.ExceptionGenerator;
 import br.com.conductor.messages.service.ArquivoService;
 import br.com.conductor.messages.util.Formatter;
 import br.com.conductor.messages.util.Utilitarios;
 import br.com.twsoftware.alfred.object.Objeto;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
-import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -50,15 +44,15 @@ public class ClassVisitor extends VoidVisitorAdapter<Void> {
     @Override
     public void visit(ClassOrInterfaceDeclaration n, Void arg) {
         if (Utilitarios.CLASS_CONTANTES_TAGS.equalsIgnoreCase(n.getName().getIdentifier())) {
-            addConstantes(n, this.origem, this.destino);
+            addConstantes(n, this.destino, this.origem);
         } else {
             Optional<AnnotationExpr> apiModel = n.getAnnotationByClass(ApiModel.class);
             if (apiModel.isPresent()) {
-                addApiModel(n, this.origem, this.destino);
+                addApiModel(n, this.destino, this.origem);
             } else {
                 Optional<AnnotationExpr> api = n.getAnnotationByClass(Api.class);
                 if (api.isPresent()) {
-//                    System.out.println("Api");
+                    addApi(n, this.destino, this.origem);
                 }
             }
         }
@@ -67,7 +61,7 @@ public class ClassVisitor extends VoidVisitorAdapter<Void> {
     @Override
     public void visit(EnumDeclaration n, Void arg) {
         if (Utilitarios.ENUM_PIER_EXCEPTION.equalsIgnoreCase(n.getName().getIdentifier())) {
-//            System.out.println("Enum");
+            addException(n, this.destino, this.origem);
         }
     }
 
@@ -79,46 +73,40 @@ public class ClassVisitor extends VoidVisitorAdapter<Void> {
      * @param message Arquivo legado das propriedades
      * @param destino Arquivo de destino das novas propriedades
      */
-    private void addApiModel(ClassOrInterfaceDeclaration n, Properties message, File destino) {
+    private void addApiModel(ClassOrInterfaceDeclaration n, File destino, Properties message) {
 
-        Optional<AnnotationExpr> apiModel = n.getAnnotationByClass(ApiModel.class);
-
-        ApiModelParse apiModelParse = new ApiModelParse();
-        apiModelParse.setClassName(n.getNameAsString());
-
-        NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) apiModel.get();
-        apiModelParse(apiModelParse, annotationByClass);
-        apiModelPropertyParse(n.getFields(), apiModelParse);
+        ApiModelGenerator apiModelGenerator = new ApiModelGenerator();
+        ApiModelAttribute apiModelParse = apiModelGenerator.get(n);
 
         Formatter formatter = new Formatter(apiModelParse.getClassName(), FormatterType.POJO);
 
         if (Objeto.notBlank(apiModelParse.getDescription())) {
-            if (!existe(destino, apiModelParse.getDescription().getValue())) {
-                addMessage(formatter, apiModelParse.getDescription().getValue(), message);
+            if (!existe(destino, apiModelParse.getDescription())) {
+                addMessage(formatter, apiModelParse.getDescription(), message);
             }
         }
 
         if (Objeto.notBlank(apiModelParse.getDiscriminator())) {
-            if (!existe(destino, apiModelParse.getDiscriminator().getValue())) {
-                addMessage(formatter, apiModelParse.getDiscriminator().getValue(), message);
+            if (!existe(destino, apiModelParse.getDiscriminator())) {
+                addMessage(formatter, apiModelParse.getDiscriminator(), message);
             }
         }
 
         if (Objeto.notBlank(apiModelParse.getValue())) {
-            if (!existe(destino, apiModelParse.getValue().getValue())) {
-                addMessage(formatter, apiModelParse.getValue().getValue(), message);
+            if (!existe(destino, apiModelParse.getValue())) {
+                addMessage(formatter, apiModelParse.getValue(), message);
             }
         }
 
-        apiModelParse.getAttributeApiModelProperty().getMethods().forEach(att -> {
+        apiModelParse.getFields().forEach(att -> {
             if (Objeto.notBlank(att.getName())) {
-                if (!existe(destino, att.getName().getValue())) {
-                    addMessage(formatter, att.getName().getValue(), message);
+                if (!existe(destino, att.getName())) {
+                    addMessage(formatter, att.getName(), message);
                 }
             }
             if (Objeto.notBlank(att.getValue())) {
-                if (!existe(destino, att.getValue().getValue())) {
-                    addMessage(formatter, att.getValue().getValue(), message);
+                if (!existe(destino, att.getValue())) {
+                    addMessage(formatter, att.getValue(), message);
                 }
             }
         });
@@ -128,78 +116,47 @@ public class ClassVisitor extends VoidVisitorAdapter<Void> {
     }
 
     /**
-     * Método que retira os valores dos atributos da anotação ApiModel
      *
-     * @param apiModel Representação do ApiModelParse
-     * @param annotationByClass Nós da classe visitada
+     * @param n
+     * @param destino
+     * @param message
      */
-    private void apiModelParse(ApiModelParse apiModel, NormalAnnotationExpr annotationByClass) {
+    private void addApi(ClassOrInterfaceDeclaration n, File destino, Properties message) {
 
-        annotationByClass.getPairs().forEach(node -> {
+        ApiGenerator apiGenerator = new ApiGenerator();
+        ApiAttribute apiAttribute = apiGenerator.get(n);
 
-            switch (AttributeAnnotationSwagger.valueOf(node.getName().toString().toUpperCase())) {
-                case DESCRIPTION: {
-                    apiModel.setDescription(new Description(Utilitarios.replace(node.getValue().toString())));
-                }
-                break;
-                case DISCRIMINATOR: {
-                    apiModel.setDiscriminator(new Discriminator(Utilitarios.replace(node.getValue().toString())));
-                }
-                break;
-                case VALUE: {
-                    apiModel.setValue(new Value(Utilitarios.replace(node.getValue().toString())));
-                }
-                break;
+        Formatter formatter = new Formatter(apiAttribute.getClassName(), FormatterType.RESOURCE);
+
+        if (Objeto.notBlank(apiAttribute.getDescription())) {
+            if (!existe(destino, apiAttribute.getDescription())) {
+                addMessage(formatter, apiAttribute.getDescription(), message);
             }
-        });
+        }
 
-    }
+        apiAttribute.getApiOperationParses().forEach(op -> {
+            if (Objeto.notBlank(op.getNotes())) {
+                if (!existe(destino, op.getNotes())) {
+                    addMessage(formatter, op.getNotes(), message);
+                }
+            }
+            if (Objeto.notBlank(op.getValue())) {
+                if (!existe(destino, op.getValue())) {
+                    addMessage(formatter, op.getValue(), message);
+                }
+            }
 
-    /**
-     * Método que retira os valores dos atributos da anotação ApiModelProperty
-     *
-     * @param fieldsDeclaration Atributos declarados na classe
-     * @param apiModel Representação do ApiModelParse
-     */
-    private void apiModelPropertyParse(List<FieldDeclaration> fieldsDeclaration, ApiModelParse apiModel) {
-
-        AttributeApiModelProperty attributeApiModelProperty = new AttributeApiModelProperty(Lists.newArrayList());
-
-        fieldsDeclaration.forEach(field -> {
-
-            Optional<AnnotationExpr> optional = field.getAnnotationByClass(ApiModelProperty.class);
-
-            if (optional.isPresent()) {
-
-                NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) optional.get();
-
-                ApiModelPropertyParse apiModelPropertyParse = new ApiModelPropertyParse();
-
-                annotationByClass.getPairs().forEach(node -> {
-
-                    switch (AttributeAnnotationSwagger.valueOf(node.getName().toString().toUpperCase())) {
-                        case VALUE: {
-                            apiModelPropertyParse.setValue(new Value(Utilitarios.replace(node.getValue().toString())));
-                        }
-                        break;
-                        case NAME: {
-                            apiModelPropertyParse.setName(new Name(Utilitarios.replace(node.getValue().toString())));
-                        }
-                        break;
+            op.getApiParams().forEach(param -> {
+                if (Objeto.notBlank(param)) {
+                    if (!existe(destino, param)) {
+                        addMessage(formatter, param, message);
                     }
-                });
-
-                attributeApiModelProperty.getMethods().add(apiModelPropertyParse);
-
-            }
+                }
+            });
 
         });
 
-        apiModel.setAttributeApiModelProperty(attributeApiModelProperty);
-
-    }
-
-    private void addApi() {
+        arquivoService.escrever(formatter.getFormatter().toString(), destino);
 
     }
 
@@ -210,24 +167,17 @@ public class ClassVisitor extends VoidVisitorAdapter<Void> {
      * @param message Arquivo legado das propriedades
      * @param destino Arquivo de destino das novas propriedades
      */
-    private void addConstantes(ClassOrInterfaceDeclaration n, Properties message, File destino) {
+    private void addConstantes(ClassOrInterfaceDeclaration n, File destino, Properties message) {
 
-        ConstantesParse constantesParse = new ConstantesParse(Lists.newArrayList());
-
-        n.getFields().forEach(field -> {
-
-            field.getVariables().forEach(node -> {
-                constantesParse.getValues().add(new Value(Utilitarios.replace(node.getInitializer().get().toString())));
-            });
-
-        });
+        ConstantesGenerator constantesGenerator = new ConstantesGenerator();
+        ConstantesParse constantesParse = constantesGenerator.get(n.getFields());
 
         Formatter formatter = new Formatter(constantesParse.getClassName(), FormatterType.CONSTANT);
 
         constantesParse.getValues().forEach(tag -> {
 
-            if (!existe(destino, tag.getValue())) {
-                addMessage(formatter, tag.getValue(), message);
+            if (!existe(destino, tag)) {
+                addMessage(formatter, tag, message);
             }
 
         });
@@ -236,7 +186,30 @@ public class ClassVisitor extends VoidVisitorAdapter<Void> {
 
     }
 
-    private void addException() {
+    /**
+     * Método responsável por gerar as propriedades para a enumeração de
+     * Exceptions
+     *
+     * @param n Declaração da Enumeração
+     * @param destino Arquivo de destino das novas propriedades
+     * @param message Arquivo legado das propriedades
+     */
+    private void addException(EnumDeclaration n, File destino, Properties message) {
+
+        ExceptionGenerator exceptionGenerator = new ExceptionGenerator();
+        ExceptionParse exceptionParse = exceptionGenerator.get(n.getEntries());
+
+        Formatter formatter = new Formatter(exceptionParse.getClassName(), FormatterType.EXCEPTION);
+
+        exceptionParse.getValues().forEach(excp -> {
+
+            if (!existe(destino, excp)) {
+                addMessage(formatter, excp, message);
+            }
+
+        });
+
+        arquivoService.escrever(formatter.getFormatter().toString(), destino);
 
     }
 

@@ -1,7 +1,7 @@
 package br.com.conductor.messages.entidades;
 
-import br.com.conductor.messages.util.Utilitarios;
 import java.io.Serializable;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,10 +13,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Discriminator implements Serializable {
+public class ApiOperationAttribute implements Serializable {
 
-    private static final long serialVersionUID = -7997458816685894545L;
+    private static final long serialVersionUID = -3840653743882669123L;
 
-    private final String name = Utilitarios.DISCRIMINATOR;
     private String value;
+    private String notes;
+    private Set<String> apiParams;
+
 }

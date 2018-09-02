@@ -16,6 +16,11 @@ public enum AttributeAnnotationSwagger {
     REQUIRED("required"),
     EXAMPLE("example"),
     HIDDEN("hidden"),
+    TAGS("tags"),
+    PRODUCES("produces"),
+    RESPONSE("response"),
+    RESPONSECONTAINER("responsecontainer"),
+    HTTPMETHOD("httpmethod"),
     POSITION("position");
 
     @Getter

@@ -45,6 +45,11 @@ public class Utilitarios {
      */
     public static String ENUM_PIER_EXCEPTION = "ExceptionsMessagesPIEREnum";
 
+    /**
+     * Constante com a nomenclatura para o ApiOperation
+     */
+    public static String NOTES = "notes";
+
     public static String replace(String texto) {
 
         texto = StringUtils.trim(texto);

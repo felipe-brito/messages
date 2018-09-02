@@ -69,7 +69,8 @@ public class ArquivoService {
     }
 
     public void gerarArquivoMessage(File origem, File destino, Properties message) {
-
+        //gerar cabeçalho do arquivo
+        //escrever(texto, destino);
         percorrerDiretorios(origem, new ClassVisitor(destino, message), null);
     }
 

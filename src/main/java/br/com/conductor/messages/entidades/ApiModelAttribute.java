@@ -1,6 +1,7 @@
 package br.com.conductor.messages.entidades;
 
 import java.io.Serializable;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,15 +13,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApiModelParse implements Serializable {
+public class ApiModelAttribute implements Serializable {
 
     private static final long serialVersionUID = -4634425380883671418L;
 
     private String className;
 
-    private Value value;
-    private Discriminator discriminator;
-    private Description description;
-    private AttributeApiModelProperty attributeApiModelProperty;
+    private String value;
+    private String discriminator;
+    private String description;
+    private List<ApiModelPropertyAttribute> fields;
 
 }
