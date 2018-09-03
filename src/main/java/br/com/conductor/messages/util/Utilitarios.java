@@ -13,7 +13,9 @@ public class Utilitarios {
     /**
      * Constante para o Charset
      */
-    public static final Charset CHARSET = Charsets.UTF_8;
+    public static final String CHARSET = "UTF-8";
+
+    public static final Charset CHARSET_UTF_8 = Charsets.UTF_8;
 
     /**
      * Constantes para o nome da chave value das anotações

@@ -1,17 +1,21 @@
 package br.com.conductor.messages.ui;
 
-import br.com.conductor.messages.controller.ObserverController;
 import br.com.conductor.messages.entidades.Idioma;
 import br.com.conductor.messages.handler.IdiomaComboBoxHandler;
 import br.com.conductor.messages.model.IdiomaComboBoxModel;
-import br.com.conductor.messages.observer.CountVisitorObserver;
 import br.com.conductor.messages.service.ArquivoService;
 import br.com.conductor.messages.service.IdiomaService;
+import br.com.conductor.messages.util.Utilitarios;
 import br.com.twsoftware.alfred.object.Objeto;
+import java.awt.Desktop;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -22,7 +26,7 @@ import lombok.Setter;
  *
  * @author Felipe Brito
  */
-public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObserver {
+public class AplicacaoUI extends javax.swing.JFrame {
 
     private static final long serialVersionUID = 3997661267826601441L;
     private final String PREFIXO_ARQUIVO = "messages_";
@@ -40,9 +44,12 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     @Setter
     private File message;
 
+    @Getter
+    @Setter
+    private File comparacao;
+
     private JFileChooser chooser;
     private ArquivoService arquivoService;
-    private LoadingUI loading;
     private IdiomaService idiomaService;
 
     /**
@@ -64,7 +71,6 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel4 = new javax.swing.JLabel();
         jTabbedPane2 = new javax.swing.JTabbedPane();
         jPanel4 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -79,22 +85,18 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         jLabel6 = new javax.swing.JLabel();
         txMessage = new javax.swing.JTextField();
         btnSelecionar = new javax.swing.JButton();
-        jPanel2 = new javax.swing.JPanel();
-        pbProgresso = new javax.swing.JProgressBar();
-        jLabel2 = new javax.swing.JLabel();
-        lbTotalArquivos = new javax.swing.JLabel();
         btnIniciar = new javax.swing.JButton();
-        btnPausar = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         txOrigemValidacao = new javax.swing.JTextField();
         btnAbrirValidacao = new javax.swing.JButton();
         btnIniciarValidacao = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        lbLinkeLog = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        jLabel4.setText("jLabel4");
 
         jTabbedPane2.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
 
@@ -108,6 +110,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         txOrigem.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
 
         btnAbrir.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnAbrir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/open.png"))); // NOI18N
         btnAbrir.setText("Abrir");
         btnAbrir.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -127,6 +130,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         txDestino.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
 
         btnSalvar.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnSalvar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/save.png"))); // NOI18N
         btnSalvar.setText("Salvar");
         btnSalvar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -140,10 +144,20 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         txMessage.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
 
         btnSelecionar.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnSelecionar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/select.png"))); // NOI18N
         btnSelecionar.setText("Selecionar");
         btnSelecionar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnSelecionarActionPerformed(evt);
+            }
+        });
+
+        btnIniciar.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnIniciar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/play.png"))); // NOI18N
+        btnIniciar.setText("Iniciar");
+        btnIniciar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnIniciarActionPerformed(evt);
             }
         });
 
@@ -174,7 +188,8 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(btnAbrir, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnSalvar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnSelecionar, javax.swing.GroupLayout.DEFAULT_SIZE, 108, Short.MAX_VALUE))
+                    .addComponent(btnSelecionar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnIniciar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(19, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -199,70 +214,9 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
                 .addGap(26, 26, 26)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cbIdioma, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cbIdioma, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Informações", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Arial", 1, 12))); // NOI18N
-
-        pbProgresso.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-
-        jLabel2.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        jLabel2.setText("Total de arquivos:");
-
-        lbTotalArquivos.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        lbTotalArquivos.setText("jLabel4");
-
-        btnIniciar.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        btnIniciar.setText("Iniciar");
-        btnIniciar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnIniciarActionPerformed(evt);
-            }
-        });
-
-        btnPausar.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        btnPausar.setText("Pausar");
-        btnPausar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnPausarActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pbProgresso, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lbTotalArquivos, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(btnPausar, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbTotalArquivos, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(pbProgresso, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnPausar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -271,18 +225,14 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(21, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(12, Short.MAX_VALUE))
         );
 
@@ -296,10 +246,22 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         txOrigemValidacao.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
 
         btnAbrirValidacao.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnAbrirValidacao.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/open.png"))); // NOI18N
         btnAbrirValidacao.setText("Abrir");
+        btnAbrirValidacao.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAbrirValidacaoActionPerformed(evt);
+            }
+        });
 
         btnIniciarValidacao.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        btnIniciarValidacao.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/play.png"))); // NOI18N
         btnIniciarValidacao.setText("Iniciar");
+        btnIniciarValidacao.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnIniciarValidacaoActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -329,21 +291,58 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Resumo", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Arial", 1, 12))); // NOI18N
+
+        jLabel2.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        jLabel2.setText("Caminho do log:");
+
+        lbLinkeLog.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        lbLinkeLog.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lbLinkeLogMouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel2)
+                .addGap(18, 18, 18)
+                .addComponent(lbLinkeLog, javax.swing.GroupLayout.PREFERRED_SIZE, 520, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(22, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(21, 21, 21)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(lbLinkeLog))
+                .addContainerGap(31, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(22, 22, 22)
+                .addContainerGap()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(273, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(34, 34, 34))
         );
 
         jTabbedPane2.addTab("Validar", jPanel5);
@@ -353,22 +352,15 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(654, 654, 654)
-                        .addComponent(jLabel4))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 697, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap()
+                .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 697, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 447, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -379,7 +371,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
 
         Idioma idioma = getIdiomaSelecionado();
         Boolean existeArquivoDestino = arquivoService.existeArquivoDestino(getDestino(), getNomeArquivo(idioma));
-        gerarArquivoMessage(getOrigem(), getDestino(), getMessage(), getNomeArquivo(idioma), existeArquivoDestino);
+        gerarArquivoMessage(getOrigem(), getDestino(), getMessage(), idioma, existeArquivoDestino);
 
     }//GEN-LAST:event_btnIniciarActionPerformed
 
@@ -389,15 +381,9 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         this.chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         if (JFileChooser.APPROVE_OPTION == this.chooser.showOpenDialog(this)) {
-            loading.showView();
-            configurarTotalArquivos("");
             setOrigem(this.chooser.getSelectedFile());
-            countArquivos(this.chooser.getSelectedFile());
             this.txOrigem.setText(this.chooser.getSelectedFile().getAbsolutePath());
-            loading.dispose();
         }
-
-        ObserverController.getInstance().unregister(this);
 
     }//GEN-LAST:event_btnAbrirActionPerformed
 
@@ -413,10 +399,6 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
 
     }//GEN-LAST:event_btnSalvarActionPerformed
 
-    private void btnPausarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPausarActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnPausarActionPerformed
-
     private void btnSelecionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSelecionarActionPerformed
         this.chooser = new JFileChooser();
         this.chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -429,19 +411,58 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         }
     }//GEN-LAST:event_btnSelecionarActionPerformed
 
+    private void btnAbrirValidacaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAbrirValidacaoActionPerformed
+
+        this.chooser = new JFileChooser();
+        this.chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        this.chooser.setAcceptAllFileFilterUsed(Boolean.FALSE);
+        this.chooser.setFileFilter(new FileNameExtensionFilter("Properties files", "properties"));
+
+        if (JFileChooser.APPROVE_OPTION == this.chooser.showOpenDialog(this)) {
+            setComparacao(this.chooser.getSelectedFile());
+            this.txOrigemValidacao.setText(this.chooser.getSelectedFile().getAbsolutePath());
+        }
+
+    }//GEN-LAST:event_btnAbrirValidacaoActionPerformed
+
+    private void btnIniciarValidacaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarValidacaoActionPerformed
+
+        if (getComparacao() != null) {
+
+            String linkLog = this.arquivoService.validarArquivo(getComparacao());
+            this.lbLinkeLog.setText(linkLog);
+
+        }
+
+    }//GEN-LAST:event_btnIniciarValidacaoActionPerformed
+
+    private void lbLinkeLogMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbLinkeLogMouseClicked
+
+        if (Objeto.notBlank(this.lbLinkeLog)) {
+
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.OPEN)) {
+
+                try {
+                    desktop.open(new File(this.lbLinkeLog.getText()));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_lbLinkeLogMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAbrir;
     private javax.swing.JButton btnAbrirValidacao;
     private javax.swing.JButton btnIniciar;
     private javax.swing.JButton btnIniciarValidacao;
-    private javax.swing.JButton btnPausar;
     private javax.swing.JButton btnSalvar;
     private javax.swing.JButton btnSelecionar;
     private javax.swing.JComboBox<String> cbIdioma;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -451,8 +472,7 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JTabbedPane jTabbedPane2;
-    private javax.swing.JLabel lbTotalArquivos;
-    private javax.swing.JProgressBar pbProgresso;
+    private javax.swing.JLabel lbLinkeLog;
     private javax.swing.JTextField txDestino;
     private javax.swing.JTextField txMessage;
     private javax.swing.JTextField txOrigem;
@@ -460,16 +480,13 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
     // End of variables declaration//GEN-END:variables
 
     private void newInstance() {
-        ObserverController.getInstance().register(this);
         idiomaService = new IdiomaService();
         arquivoService = new ArquivoService();
-        loading = new LoadingUI();
     }
 
     private void initView() {
         this.setLocationRelativeTo(null);
         this.setResizable(Boolean.FALSE);
-        configurarTotalArquivos("0");
     }
 
     private void initComboBoxIdiomas() {
@@ -481,24 +498,6 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         this.cbIdioma.setRenderer(new IdiomaComboBoxHandler());
     }
 
-    @Override
-    public void update(Object o) {
-        if (o != null) {
-            if ((Boolean) o) {
-                Integer valor = this.lbTotalArquivos.getText().isEmpty() ? 0 : Integer.parseInt(this.lbTotalArquivos.getText());
-                configurarTotalArquivos((++valor).toString());
-            }
-        }
-    }
-
-    private void configurarTotalArquivos(String txt) {
-        this.lbTotalArquivos.setText(txt);
-    }
-
-    private void countArquivos(File file) {
-        arquivoService.contarTotalAquivos(file);
-    }
-
     private Idioma getIdiomaSelecionado() {
         return (Idioma) this.cbIdioma.getSelectedItem();
     }
@@ -508,29 +507,55 @@ public class AplicacaoUI extends javax.swing.JFrame implements CountVisitorObser
         return Objeto.notBlank(idioma) && Objeto.notBlank(idioma.getLinguagem()) ? PREFIXO_ARQUIVO + idioma.getLinguagem() + SUFIXO_ARQUIVO : "";
     }
 
-    private void gerarArquivoMessage(File origem, File destino, File message, String nomeArquivo, Boolean existeArquivoDestino) {
-
-        if (existeArquivoDestino) {
-            //cria um novo arquivo com o prefixo (n), onde n é a versão ca copia
-        }
-
-        Properties arquivoMessageOriginal = null;
+    private void gerarArquivoMessage(File origem, File destino, File message, Idioma idioma, Boolean existeArquivoDestino) {
 
         StringBuilder builder = new StringBuilder(destino.getAbsolutePath());
-        builder.append(File.separator).append(nomeArquivo);
+        builder.append(File.separator).append(getNomeArquivo(idioma));
 
-        destino = new File(builder.toString());
+        destino = existeArquivoDestino ? create(destino, idioma) : new File(builder.toString());
 
-        if (!destino.exists()) {
-            try {
-                destino.createNewFile();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+        try {
+            destino.createNewFile();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
 
-        this.arquivoService.gerarArquivoMessage(origem, destino, arquivoMessageOriginal);
+        this.arquivoService.gerarArquivoMessage(origem, destino, recuperar(message));
 
+    }
+
+    private File create(File destino, Idioma idioma) {
+
+        UUID uuid = UUID.randomUUID();
+
+        StringBuilder builder = new StringBuilder(destino.getAbsolutePath());
+        builder.append(File.separator)
+                .append(PREFIXO_ARQUIVO)
+                .append(idioma.getLinguagem())
+                .append("_")
+                .append(uuid.toString())
+                .append(SUFIXO_ARQUIVO);
+
+        return new File(builder.toString());
+
+    }
+
+    private Properties recuperar(File message) {
+
+        if (message == null) {
+            return null;
+        }
+
+        Properties properties = new Properties();
+
+        try {
+            BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(message), Utilitarios.CHARSET));
+            properties.load(file);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        return properties;
     }
 
 }

@@ -1,20 +1,26 @@
 package br.com.conductor.messages.service;
 
 import br.com.conductor.messages.exception.ArquivoException;
+import br.com.conductor.messages.util.Formatter;
 import br.com.conductor.messages.util.Utilitarios;
 import br.com.conductor.messages.visitor.ClassVisitor;
-import br.com.conductor.messages.visitor.CountVisitor;
 import br.com.twsoftware.alfred.object.Objeto;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  *
@@ -23,15 +29,6 @@ import java.util.Properties;
 public class ArquivoService {
 
     private static CompilationUnit parse;
-
-    /**
-     * Conta o número de arquivos que podem ser internacionalizados.
-     *
-     * @param origem arquivo de origem da internacionalização
-     */
-    public void contarTotalAquivos(File origem) {
-        percorrerDiretorios(origem, new CountVisitor(), null);
-    }
 
     /**
      * Verifica se existe um arquivo no destino com o mesmo nome do informado.
@@ -68,9 +65,56 @@ public class ArquivoService {
         }
     }
 
+    public String validarArquivo(File arquivo) {
+
+        try {
+            StringBuilder builder = new StringBuilder();
+
+            List<String> linhas = Files.readAllLines(Paths.get(arquivo.toURI()));
+
+            List<String> ocorrencias = Lists.newArrayList();
+            Set<String> chaves = Sets.newHashSet();
+
+            linhas.stream().forEach(key -> {
+                String[] chave = key.split("=");
+                ocorrencias.add(chave[0]);
+                chaves.add(chave[0]);
+            });
+
+            chaves.forEach(chave -> {
+                Integer qtde = Collections.frequency(ocorrencias, chave);
+                if (qtde > 1) {
+
+                    builder.append(chave)
+                            .append(": ")
+                            .append(qtde)
+                            .append("\n");
+
+                }
+            });
+
+            UUID uuid = UUID.randomUUID();
+
+            File log = new File(arquivo.getParentFile().getAbsolutePath() + File.separator + "log_" + uuid.toString() + ".txt");
+
+            if (!log.exists()) {
+                log.createNewFile();
+            }
+
+            escrever(builder.toString(), log);
+
+            return log.getAbsolutePath();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        return null;
+    }
+
     public void gerarArquivoMessage(File origem, File destino, Properties message) {
-        //gerar cabeçalho do arquivo
-        //escrever(texto, destino);
+        Formatter formatter = new Formatter();
+        escrever(formatter.header(), destino);
         percorrerDiretorios(origem, new ClassVisitor(destino, message), null);
     }
 
@@ -96,8 +140,9 @@ public class ArquivoService {
                         inOrdem(d, visitor, arg);
                     } else {
                         try {
-                            //se for arquivo .java
-                            parse(d, visitor, arg);
+                            if (d.getAbsolutePath().endsWith(".java")) {
+                                parse(d, visitor, arg);
+                            }
                         } catch (ArquivoException ex) {
                             ex.printStackTrace();
                         }
@@ -111,7 +156,7 @@ public class ArquivoService {
 
         try {
 
-            parse = JavaParser.parse(file, Utilitarios.CHARSET);
+            parse = JavaParser.parse(file, Utilitarios.CHARSET_UTF_8);
             parse.accept(visitor, arg);
 
         } catch (FileNotFoundException ex) {
