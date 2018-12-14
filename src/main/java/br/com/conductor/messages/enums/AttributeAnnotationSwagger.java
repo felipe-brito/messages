@@ -21,7 +21,9 @@ public enum AttributeAnnotationSwagger {
     RESPONSE("response"),
     RESPONSECONTAINER("responsecontainer"),
     HTTPMETHOD("httpmethod"),
-    POSITION("position");
+    POSITION("position"),
+    REGEXP("regexp"),
+    MESSAGE("message");
 
     @Getter
     private final String value;

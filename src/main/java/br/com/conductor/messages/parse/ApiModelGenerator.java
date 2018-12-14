@@ -13,6 +13,9 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 
 /**
  *
@@ -106,9 +109,64 @@ public class ApiModelGenerator {
 
             }
 
+            Optional<AnnotationExpr> max = field.getAnnotationByClass(Max.class);
+            if (max.isPresent()) {
+
+                if (max.get() instanceof NormalAnnotationExpr) {
+                    NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) max.get();
+                    ApiModelPropertyAttribute apiModelPropertyParse = new ApiModelPropertyAttribute();
+                    messageValidation(annotationByClass, apiModelPropertyParse, apiModelPropertyFields);
+                    apiModelPropertyFields.add(apiModelPropertyParse);
+                }
+
+            }
+
+            Optional<AnnotationExpr> min = field.getAnnotationByClass(Min.class);
+            if (min.isPresent()) {
+
+                if (min.get() instanceof NormalAnnotationExpr) {
+
+                    NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) min.get();
+                    ApiModelPropertyAttribute apiModelPropertyParse = new ApiModelPropertyAttribute();
+                    messageValidation(annotationByClass, apiModelPropertyParse, apiModelPropertyFields);
+                    apiModelPropertyFields.add(apiModelPropertyParse);
+
+                }
+            }
+
+            Optional<AnnotationExpr> pattern = field.getAnnotationByClass(Pattern.class);
+            if (pattern.isPresent()) {
+
+                if (pattern.get() instanceof NormalAnnotationExpr) {
+
+                    NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) pattern.get();
+                    ApiModelPropertyAttribute apiModelPropertyParse = new ApiModelPropertyAttribute();
+                    messageValidation(annotationByClass, apiModelPropertyParse, apiModelPropertyFields);
+                    apiModelPropertyFields.add(apiModelPropertyParse);
+
+                }
+            }
+
         });
 
         apiModel.setFields(apiModelPropertyFields);
+
+    }
+
+    private void messageValidation(NormalAnnotationExpr annotationByClass, ApiModelPropertyAttribute apiModelPropertyParse, List<ApiModelPropertyAttribute> apiModelPropertyFields) {
+
+        annotationByClass.getPairs().forEach(node -> {
+
+            switch (AttributeAnnotationSwagger.valueOf(node.getName().toString().toUpperCase())) {
+                case MESSAGE: {
+                    String key = Utilitarios.replace(node.getValue().toString());
+                    if (!exite(key, apiModelPropertyFields)) {
+                        apiModelPropertyParse.setValue(key);
+                    }
+                }
+            }
+
+        });
 
     }
 
@@ -119,7 +177,6 @@ public class ApiModelGenerator {
             if (key.equals(property.getName()) || key.equals(property.getName())) {
                 return Boolean.TRUE;
             }
-
         }
 
         return Boolean.FALSE;
