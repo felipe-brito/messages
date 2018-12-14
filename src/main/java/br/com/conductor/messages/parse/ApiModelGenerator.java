@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Optional;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import org.hibernate.validator.constraints.Length;
 
 /**
  *
@@ -140,6 +142,32 @@ public class ApiModelGenerator {
                 if (pattern.get() instanceof NormalAnnotationExpr) {
 
                     NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) pattern.get();
+                    ApiModelPropertyAttribute apiModelPropertyParse = new ApiModelPropertyAttribute();
+                    messageValidation(annotationByClass, apiModelPropertyParse, apiModelPropertyFields);
+                    apiModelPropertyFields.add(apiModelPropertyParse);
+
+                }
+            }
+
+            Optional<AnnotationExpr> length = field.getAnnotationByClass(Length.class);
+            if (length.isPresent()) {
+
+                if (length.get() instanceof NormalAnnotationExpr) {
+
+                    NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) length.get();
+                    ApiModelPropertyAttribute apiModelPropertyParse = new ApiModelPropertyAttribute();
+                    messageValidation(annotationByClass, apiModelPropertyParse, apiModelPropertyFields);
+                    apiModelPropertyFields.add(apiModelPropertyParse);
+
+                }
+            }
+
+            Optional<AnnotationExpr> notNull = field.getAnnotationByClass(NotNull.class);
+            if (notNull.isPresent()) {
+
+                if (notNull.get() instanceof NormalAnnotationExpr) {
+
+                    NormalAnnotationExpr annotationByClass = (NormalAnnotationExpr) notNull.get();
                     ApiModelPropertyAttribute apiModelPropertyParse = new ApiModelPropertyAttribute();
                     messageValidation(annotationByClass, apiModelPropertyParse, apiModelPropertyFields);
                     apiModelPropertyFields.add(apiModelPropertyParse);

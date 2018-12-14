@@ -23,6 +23,8 @@ public enum AttributeAnnotationSwagger {
     HTTPMETHOD("httpmethod"),
     POSITION("position"),
     REGEXP("regexp"),
+    MAX("max"),
+    MIN("min"),
     MESSAGE("message");
 
     @Getter
